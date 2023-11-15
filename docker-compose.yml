@@ -1,0 +1,43 @@
+version: "3"
+services:
+    scs-postgres:
+        image: postgres:10-alpine
+        container_name: scs-postgres
+        restart: always
+        volumes:
+          - ./data/postgres:/var/lib/postgresql/data
+          # 별도로 dump된 sql 파일을 사용하는 경우, 아래 볼륨 할당 스크립트 내용 수정 필요
+          - ./sqlfile/20231025.sql:/docker-entrypoint-initdb.d/init-user-db.sql:ro
+        environment:
+          - POSTGRES_DB=scsdepartment
+          - POSTGRES_USER=scsuser
+          - POSTGRES_PASSWORD=scspasswd
+          - RECOVER_DATABASE=false
+
+    scs-backend:
+        image: snslabdocker/scs_back:0.6
+        container_name: scs-backend
+        restart: always
+        depends_on:
+          - scs-postgres
+        volumes:
+          - ./data/backend:/SCS_back/data
+        environment:
+          - POSTGRES_DB=scsdepartment
+          - POSTGRES_USER=scsuser
+          - POSTGRES_PASSWORD=scspasswd
+        # command: /bin/bash -c "while true; do echo test; sleep 100; done"
+        entrypoint: /bin/bash -c "python3 /SCS_back/manage.py runserver 0.0.0.0:8000"
+
+    scs-frontend:
+        image: snslabdocker/scs_front:0.7
+        container_name: scs-frontend
+        restart: always
+        depends_on:
+          - scs-backend
+        environment:
+          - HOST=0.0.0.0
+          - TARGET=http://scs-backend:8000
+        ports:
+          - "0.0.0.0:80:80"
+          - "0.0.0.0:443:1443"
