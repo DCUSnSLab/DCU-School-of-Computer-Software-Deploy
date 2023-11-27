@@ -30,7 +30,7 @@ services:
         entrypoint: /bin/bash -c "python3 /SCS_back/manage.py runserver 0.0.0.0:8000"
 
     scs-frontend:
-        image: snslabdocker/scs_front:0.7
+        image: snslabdocker/scs_front:0.8
         container_name: scs-frontend
         restart: always
         depends_on:
